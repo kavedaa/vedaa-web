@@ -17,7 +17,9 @@ object ContextPath {
 abstract class View {
   def render(request: HttpServletRequest, response: HttpServletResponse): Unit
   def contextify(link: String)(implicit contextPath: ContextPath) =
-    contextPath.path + "/" + link
+    if (!link.startsWith("/")) contextPath.path + "/" + link
+    else link
+   
 }
 
 abstract class ContentView extends View {
@@ -134,12 +136,12 @@ abstract class XhtmlView extends DocTypeView with BaseXmlView {
       <head>
         <title>{ title }</title>
         {
-          cssFiles map { cssFile =>
+          cssFiles.reverse map { cssFile =>
             <link rel="stylesheet" type="text/css" href={ contextify(cssFile) }/>
           }
         }
         {
-          jsFiles map { jsFile =>
+          jsFiles.reverse map { jsFile =>
             <script src={ contextify(jsFile) }/>
           }
         }
