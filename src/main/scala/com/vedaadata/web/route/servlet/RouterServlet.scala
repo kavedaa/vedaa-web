@@ -28,7 +28,7 @@ object Req {
     response)
 }
 
-class RouterServlet extends HttpServlet
+class RouterServlet extends HttpServlet with CommonExtractors
 {
   val routeBuilder = new ListBuffer[PartialFunction[Req, View]]
 
@@ -56,10 +56,6 @@ class RouterServlet extends HttpServlet
 
   object - {
     def unapply(req: Req) = Some(req, req.response)
-  }
-
-  object & {
-    def unapply[T](x: T) = Some(x, x)
   }
 
   object get {
