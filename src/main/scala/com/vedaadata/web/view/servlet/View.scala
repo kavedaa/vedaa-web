@@ -18,8 +18,7 @@ abstract class View {
   def render(request: HttpServletRequest, response: HttpServletResponse): Unit
   def contextify(link: String)(implicit contextPath: ContextPath) =
     if (!link.startsWith("/")) contextPath.path + "/" + link
-    else link
-   
+    else link   
 }
 
 abstract class ContentView extends View {
@@ -163,9 +162,15 @@ class ContextRedirectView(url: String = "") extends View {
   def render(request: HttpServletRequest, response: HttpServletResponse) =
     response.sendRedirect(contextify(url)(ContextPath(request)))
 }
+
+class StatusView(code: Int) extends View {
+  def render(request: HttpServletRequest, response: HttpServletResponse) =
+    response setStatus code
+}
+
 class ErrorView(code: Int, error: String = "") extends View {
   def render(request: HttpServletRequest, response: HttpServletResponse) =
-    response.sendError(code, error)
+    response sendError (code, error)
 }
 
 

@@ -124,5 +124,10 @@ class RouterServlet extends HttpServlet with CommonExtractors
     def update(session: HttpSession, data: T) { session setAttribute (name, data) }
   }
 
+  def ok = new StatusView(HttpServletResponse.SC_OK)
+  def notFound = new ErrorView(HttpServletResponse.SC_NOT_FOUND)
+  def serverError = new ErrorView(HttpServletResponse.SC_INTERNAL_SERVER_ERROR)
+  
+  
 }
 
