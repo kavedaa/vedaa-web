@@ -7,18 +7,19 @@ import com.vedaadata.web.io.FileStreamer
 import javax.servlet.http.HttpServlet
 import java.io.File
 
-case class ContextPath(path: String)
-
-object ContextPath {
-  def apply(request: HttpServletRequest): ContextPath =
-    ContextPath(request.getContextPath)
-}
-
 abstract class View {
+
+  case class ContextPath(path: String)
+
+  object ContextPath {
+    def apply(request: HttpServletRequest): ContextPath =
+      ContextPath(request.getContextPath)
+  }
+
   def render(request: HttpServletRequest, response: HttpServletResponse): Unit
   def contextify(link: String)(implicit contextPath: ContextPath) =
     if (!link.startsWith("/")) contextPath.path + "/" + link
-    else link   
+    else link
 }
 
 abstract class ContentView extends View {
@@ -46,13 +47,11 @@ class StreamView(val contentType: String, f: java.io.OutputStream => Unit) exten
 }
 
 class FileStreamerView(file: File, servlet: HttpServlet) extends View with FileStreamer {
-  
-  def this(filePath: String, servlet: HttpServlet)
-  	= this(new File(filePath), servlet)
-  
-  def this(fileName: String, path: String, servlet: HttpServlet)
-  	= this(new File(path, fileName), servlet)
-  
+
+  def this(filePath: String, servlet: HttpServlet) = this(new File(filePath), servlet)
+
+  def this(fileName: String, path: String, servlet: HttpServlet) = this(new File(path, fileName), servlet)
+
   def contentType(fileName: String) =
     servlet.getServletContext.getMimeType(fileName.toLowerCase) match {
       case null => "application/octet-stream"
@@ -60,7 +59,7 @@ class FileStreamerView(file: File, servlet: HttpServlet) extends View with FileS
     }
 
   def render(request: HttpServletRequest, response: HttpServletResponse) {
-    response setContentType(contentType(file.getName))
+    response setContentType (contentType(file.getName))
     println(file.getName)
     println(contentType(file.getName))
     streamOriginal(file, response)
@@ -152,7 +151,6 @@ abstract class XhtmlView extends DocTypeView with BaseXmlView {
 
 }
 
-
 class RedirectView(url: String) extends View {
   def render(request: HttpServletRequest, response: HttpServletResponse) =
     response.sendRedirect(url)
@@ -172,7 +170,6 @@ class ErrorView(code: Int, error: String = "") extends View {
   def render(request: HttpServletRequest, response: HttpServletResponse) =
     response sendError (code, error)
 }
-
 
 object View {
 
