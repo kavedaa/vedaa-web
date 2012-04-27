@@ -23,7 +23,7 @@ abstract class View {
 }
 
 abstract class ContentView extends View {
-  val contentType: String
+  def contentType: String
 }
 
 class ByteArrayView(ba: Array[Byte], val contentType: String) extends ContentView {
@@ -74,7 +74,7 @@ abstract class StringView extends ContentView {
 }
 
 class TextView(content: String) extends StringView {
-  val contentType = "text/plain; charset=utf-8"
+  def contentType = "text/plain; charset=utf-8"
   def render(request: HttpServletRequest, response: HttpServletResponse) {
     renderString(response, content)
   }
@@ -90,8 +90,8 @@ abstract class DocTypeView extends StringView {
 }
 
 trait BaseXmlView extends StringView {
-  val contentType = "text/html; charset=utf-8"
-  val prettyPrint = true
+  def contentType = "text/html; charset=utf-8"
+  def prettyPrint = true
 
   def xml(implicit ctxPath: ContextPath): scala.xml.Elem
 
@@ -113,8 +113,12 @@ trait BaseXmlView extends StringView {
 
 }
 
-class XmlView(elem: scala.xml.Elem) extends BaseXmlView {
-  def xml(implicit ctxPath: ContextPath) = elem
+abstract class XmlView extends BaseXmlView {
+  override def renderString(response: HttpServletResponse, content: String) {
+    val writer = response.getWriter
+    writer println """<?xml version="1.0" encoding="UTF-8"?>"""
+    writer print content
+  }
 }
 
 abstract class XhtmlView extends DocTypeView with BaseXmlView {
