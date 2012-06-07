@@ -166,8 +166,10 @@ class ContextRedirectView(url: String = "") extends View {
 }
 
 class StatusView(code: Int) extends View {
-  def render(request: HttpServletRequest, response: HttpServletResponse) =
-    response setStatus code
+  def render(request: HttpServletRequest, response: HttpServletResponse) {
+    response setContentType "text/plain"
+    response setStatus code    
+  }
 }
 
 class ErrorView(code: Int, error: String = "") extends View {

@@ -4,21 +4,37 @@ import java.text.DateFormat
 import java.text.ParseException
 
 class Params(val self: Map[String, Array[String]]) {
+  
+  //	Basic
+  
   def exists(name: String) = self isDefinedAt name
-  def apply(name: String) = self get name map { _.apply(0) }
+  def apply(name: String) = value(name)
+  def value(name: String) = self get name map { _.apply(0) }
   def values(name: String) = self get name match {
     case Some(arr) if (arr.length > 0) => arr.toList
     case _ => Nil  
   }
 
-  //  gir parameterverdi som Int for parameter "name"
+  //	Typed simple values
+  
   def int(name: String): Option[Int] =
     try { apply(name) map { _.toInt } } catch { case ex: NumberFormatException => None }
 
-  //  gir parameterverdi som Date for parameter "name"
+  def string(name: String) = value(name)
+    
   def date(name: String)(implicit df: DateFormat): Option[java.util.Date] =
     try { apply(name) map df.parse } catch { case ex: ParseException => None }
 
+  def boolean(name: String): Option[Boolean] =
+    apply(name) map { _ match {
+      case "true" | "1" | "yes" | "on" => true
+      case _ => false
+    } }
+
+  //	Typed array values
+  
+  def strings(name: String) = values(name)
+  
   //  gir alle x som Int for eksisterende parametre på formen "name_x"
   def intIdsForName(name: String): List[Int] = {
     val regex = """([A-Za-z0-9-]+)_([0-9]+)""".r

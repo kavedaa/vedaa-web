@@ -10,29 +10,35 @@ import javax.servlet.http.HttpSession
 import scala.collection.mutable.ListBuffer
 import collection.JavaConversions._
 
-class Query(val path: List[String], val params: Params)
-
-object Query {
-  def apply(request: HttpServletRequest) = new Query(
-    PathParams(request.getServletPath).all,
-    new Params(mapAsScalaMap(request.getParameterMap).toMap.asInstanceOf[Map[String, Array[String]]])
-  )
+trait RelativeMapping { this: RouterServlet =>   
+  override def path(request: HttpServletRequest) = request.getPathInfo 
 }
 
-class Req(val query: Query, val request: HttpServletRequest, val response: HttpServletResponse)
+class RouterServlet extends HttpServlet with CommonExtractors {
 
-object Req {
-  def apply(request: HttpServletRequest, response: HttpServletResponse) = new Req(
-    Query(request),
-    request,
-    response)
-}
+  class Query(val path: List[String], val params: Params)
 
-class RouterServlet extends HttpServlet with CommonExtractors
-{
+  object Query {
+    def apply(request: HttpServletRequest) = new Query(
+      PathParams(path(request)).all,
+      new Params(mapAsScalaMap(request.getParameterMap).toMap.asInstanceOf[Map[String, Array[String]]]))
+  }
+
+  class Req(val query: Query, val request: HttpServletRequest, val response: HttpServletResponse)
+
+  object Req {
+    def apply(request: HttpServletRequest, response: HttpServletResponse) = new Req(
+      Query(request),
+      request,
+      response)
+  }
+
+  def path(request: HttpServletRequest) = request.getServletPath 
+  
   val routeBuilder = new ListBuffer[PartialFunction[Req, View]]
 
-  var default: PartialFunction[Req, View] = { case _ =>
+  var default: PartialFunction[Req, View] = {
+    case _ =>
       new ErrorView(HttpServletResponse.SC_NOT_FOUND)
   }
 
@@ -115,8 +121,10 @@ class RouterServlet extends HttpServlet with CommonExtractors
     def init: T
     def unapply(session: HttpSession) = new SessionW(session)(name) match {
       case Some(x) =>
+        println("Found session data as: " + name)
         Some(x.asInstanceOf[T])
       case None =>
+        println("Initializing session data as: " + name)
         val data = init
         session setAttribute (name, data)
         Some(data)
@@ -127,7 +135,6 @@ class RouterServlet extends HttpServlet with CommonExtractors
   def ok = new StatusView(HttpServletResponse.SC_OK)
   def notFound = new ErrorView(HttpServletResponse.SC_NOT_FOUND)
   def serverError = new ErrorView(HttpServletResponse.SC_INTERNAL_SERVER_ERROR)
-  
-  
+
 }
 
