@@ -18,7 +18,7 @@ abstract class View {
 
   def render(request: HttpServletRequest, response: HttpServletResponse): Unit
   def contextify(link: String)(implicit contextPath: ContextPath) =
-    if (!link.startsWith("/")) contextPath.path + "/" + link
+    if (!link.startsWith("/") && !link.startsWith("http://")) contextPath.path + "/" + link
     else link
 }
 

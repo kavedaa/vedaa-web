@@ -119,16 +119,17 @@ class RouterServlet extends HttpServlet with CommonExtractors {
 
   abstract class SessionData[T](name: String) {
     def init: T
-    def unapply(session: HttpSession) = new SessionW(session)(name) match {
+    def apply(session: HttpSession) = new SessionW(session)(name) match {
       case Some(x) =>
         println("Found session data as: " + name)
-        Some(x.asInstanceOf[T])
+        x.asInstanceOf[T]
       case None =>
         println("Initializing session data as: " + name)
         val data = init
         session setAttribute (name, data)
-        Some(data)
+        data
     }
+    def unapply(session: HttpSession) = Some(apply(session))
     def update(session: HttpSession, data: T) { session setAttribute (name, data) }
   }
 
