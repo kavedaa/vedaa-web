@@ -7,7 +7,7 @@ import com.vedaadata.web.io.FileStreamer
 import javax.servlet.http.HttpServlet
 import java.io.File
 
-abstract class View {
+abstract class View extends ViewUtil {
 
   case class ContextPath(path: String)
 
