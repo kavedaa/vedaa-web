@@ -168,7 +168,7 @@ class ContextRedirectView(url: String = "") extends View {
 class StatusView(code: Int) extends View {
   def render(request: HttpServletRequest, response: HttpServletResponse) {
     response setContentType "text/plain"
-    response setStatus code    
+    response setStatus code
   }
 }
 
@@ -192,6 +192,20 @@ object View {
     override def cssFiles = List("style.css")
     def body(implicit ctxPath: ContextPath) = elem
   }
-
 }
 
+trait ViewUtil {
+
+  def URL(path: List[String], params: (String, Any)*) = {
+    val pathElement = Some(path mkString "/")
+    val paramsString = params.toList map {
+      case (param, value) =>
+        List(param, "=", value).mkString
+    } mkString "&"
+    val paramsElement = paramsString match {
+      case x if x.nonEmpty => Some(x)
+      case _ => None
+    }
+    List(pathElement, paramsElement).flatten mkString "?"
+  }
+}

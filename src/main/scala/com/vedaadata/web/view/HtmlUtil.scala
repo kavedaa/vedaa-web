@@ -2,7 +2,7 @@ package com.vedaadata.web.view
 
 import java.text.SimpleDateFormat
 
-trait ViewUtil
+trait HtmlUtil
 {
   def checkBox(name: String, checked: Boolean = false, value: String = "1", clazz: String = "", disabled: Boolean = false) =
     (checked, disabled) match {

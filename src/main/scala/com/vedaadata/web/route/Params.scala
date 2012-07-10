@@ -53,18 +53,8 @@ class Params(val self: Map[String, Array[String]]) {
   override def toString = self.toString
 }
 
-class Param(name: String) {
-  def unapply(params: Params) = params(name)
-}
-
-trait CommonExtractors {
-  
-  object & {
-    def unapply[T](x: T) = Some(x, x)
-  }
-
-  object int {
-    def unapply(s: String) = try { Some(s.toInt) } catch { case _ => None }
-  }
-    
+abstract class Param(name: String) {
+  def default: String
+  def apply(f: this.type => String) = name -> f(this)
+  def unapply(params: Params) = params(name) orElse Some(default)
 }
