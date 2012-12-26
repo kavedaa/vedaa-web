@@ -1,4 +1,4 @@
-package com.vedaadata.web.view.servlet
+package com.vedaadata.web.view
 
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers

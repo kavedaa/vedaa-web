@@ -31,9 +31,13 @@ class Params(val self: Map[String, Array[String]]) {
       case _ => false
     } }
 
-  //	Typed array values
+  //	Typed list values
   
-  def strings(name: String) = values(name)
+  def strings(name: String): List[String] = values(name)
+  
+  def ints(name: String): List[Int] = values(name) flatMap { s => 
+    try { Some(s.toInt) } catch { case _: NumberFormatException => None } 
+  }
   
   //  gir alle x som Int for eksisterende parametre på formen "name_x"
   def intIdsForName(name: String): List[Int] = {
@@ -53,8 +57,13 @@ class Params(val self: Map[String, Array[String]]) {
   override def toString = self.toString
 }
 
-abstract class Param(name: String) {
+class Param(val name: String) {
+  def apply(f: this.type => String) = name -> f(this)
+  def unapply(params: Params) = Some(params(name))
+}
+
+abstract class DefaultParam(val name: String) {
   def default: String
   def apply(f: this.type => String) = name -> f(this)
-  def unapply(params: Params) = params(name) orElse Some(default)
+  def unapply(params: Params) = Some(params(name) getOrElse default) 
 }
