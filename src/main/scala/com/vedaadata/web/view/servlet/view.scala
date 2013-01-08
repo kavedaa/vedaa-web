@@ -7,19 +7,14 @@ import com.vedaadata.web.io.FileStreamer
 import javax.servlet.http.HttpServlet
 import java.io.File
 import com.vedaadata.web.view.ViewUtil
+import com.vedaadata.web.route.servlet.RenderContext
 
 abstract class View extends ViewUtil {
 
-  case class ContextPath(path: String)
-
-  object ContextPath {
-    def apply(request: HttpServletRequest): ContextPath =
-      ContextPath(request.getContextPath)
-  }
-
-  def render(request: HttpServletRequest, response: HttpServletResponse): Unit
-  def contextify(link: String)(implicit contextPath: ContextPath) =
-    if (!link.startsWith("/") && !link.startsWith("http://")) contextPath.path + "/" + link
+  def render(implicit ctx: RenderContext): Unit
+  
+  def contextify(link: String)(implicit ctx: RenderContext) =
+    if (!link.startsWith("/") && !link.startsWith("http://")) ctx.request.getContextPath + "/" + link
     else link
 }
 
@@ -28,9 +23,9 @@ abstract class ContentView extends View {
 }
 
 class ByteArrayView(ba: Array[Byte], val contentType: String) extends ContentView {
-  def render(request: HttpServletRequest, response: HttpServletResponse) {
-    response setContentType contentType
-    val os = response.getOutputStream
+  def render(implicit ctx: RenderContext) {
+    ctx.response setContentType contentType
+    val os = ctx.response.getOutputStream
     os write ba
     os.flush()
     os.close()
@@ -38,9 +33,9 @@ class ByteArrayView(ba: Array[Byte], val contentType: String) extends ContentVie
 }
 
 class StreamView(val contentType: String, f: java.io.OutputStream => Unit) extends ContentView {
-  def render(request: HttpServletRequest, response: HttpServletResponse) {
-    response setContentType contentType
-    val os = response.getOutputStream
+  def render(implicit ctx: RenderContext) {
+    ctx.response setContentType contentType
+    val os = ctx.response.getOutputStream
     f(os)
     os.flush()
     os.close()
@@ -59,11 +54,11 @@ class FileStreamerView(file: File, servlet: HttpServlet) extends View with FileS
       case contentType => contentType
     }
 
-  def render(request: HttpServletRequest, response: HttpServletResponse) {
-    response setContentType (contentType(file.getName))
+  def render(implicit ctx: RenderContext) {
+    ctx.response setContentType (contentType(file.getName))
     println(file.getName)
     println(contentType(file.getName))
-    streamOriginal(file, response)
+    streamOriginal(file, ctx.response)
   }
 }
 
@@ -76,8 +71,8 @@ abstract class StringView extends ContentView {
 
 class TextView(content: String) extends StringView {
   def contentType = "text/plain; charset=utf-8"
-  def render(request: HttpServletRequest, response: HttpServletResponse) {
-    renderString(response, content)
+  def render(implicit ctx: RenderContext) {
+    renderString(ctx.response, content)
   }
 }
 
@@ -94,22 +89,22 @@ trait BaseXmlView extends StringView {
   def contentType = "text/html; charset=utf-8"
   def prettyPrint = true
 
-  def xml(implicit ctxPath: ContextPath): scala.xml.Elem
+  def xml(implicit ctx: RenderContext): scala.xml.Elem
 
-  def render(request: HttpServletRequest, response: HttpServletResponse) {
-    if (prettyPrint) renderPretty(request, response)
-    else renderPlain(request, response)
+  def render(implicit ctx: RenderContext) {
+    if (prettyPrint) renderPretty
+    else renderPlain
   }
 
-  private def renderPretty(request: HttpServletRequest, response: HttpServletResponse) {
+  private def renderPretty(implicit ctx: RenderContext) {
     val printer = new PrettyPrinter(1024, 2)
     val sb = new StringBuilder
-    printer.format(xml(ContextPath(request)), sb)
-    renderString(response, sb toString)
+    printer.format(xml, sb)
+    renderString(ctx.response, sb toString)
   }
 
-  private def renderPlain(request: HttpServletRequest, response: HttpServletResponse) {
-    renderString(response, xml(ContextPath(request)) toString)
+  private def renderPlain(implicit ctx: RenderContext) {
+    renderString(ctx.response, xml.toString)
   }
 
 }
@@ -132,9 +127,9 @@ abstract class XhtmlView extends DocTypeView with BaseXmlView {
 
   def jsFiles: List[String] = Nil
 
-  def body(implicit contextPath: ContextPath): scala.xml.Elem
+  def body(implicit ctx: RenderContext): scala.xml.Elem
 
-  def xml(implicit contextPath: ContextPath) =
+  def xml(implicit ctx: RenderContext) =
     <html xmlns="http://www.w3.org/1999/xhtml">
       <head>
         <title>{ title }</title>
@@ -157,25 +152,25 @@ abstract class XhtmlView extends DocTypeView with BaseXmlView {
 }
 
 class RedirectView(url: String) extends View {
-  def render(request: HttpServletRequest, response: HttpServletResponse) =
-    response.sendRedirect(url)
+  def render(implicit ctx: RenderContext) =
+    ctx.response sendRedirect url
 }
 
 class ContextRedirectView(url: String = "") extends View {
-  def render(request: HttpServletRequest, response: HttpServletResponse) =
-    response.sendRedirect(contextify(url)(ContextPath(request)))
+  def render(implicit ctx: RenderContext) =
+    ctx.response sendRedirect(contextify(url))
 }
 
 class StatusView(code: Int) extends View {
-  def render(request: HttpServletRequest, response: HttpServletResponse) {
-    response setContentType "text/plain"
-    response setStatus code
+  def render(implicit ctx: RenderContext) {
+    ctx.response setContentType "text/plain"
+    ctx.response setStatus code
   }
 }
 
 class ErrorView(code: Int, error: String = "") extends View {
-  def render(request: HttpServletRequest, response: HttpServletResponse) =
-    response sendError (code, error)
+  def render(implicit ctx: RenderContext) =
+    ctx.response sendError (code, error)
 }
 
 object View {
@@ -183,7 +178,7 @@ object View {
   implicit def titleAndBodyToView(titleAndBody: (String, scala.xml.Elem)) =
     new XhtmlView {
       def title = titleAndBody._1
-      def body(implicit contextPath: ContextPath) = titleAndBody._2
+      def body(implicit ctx: RenderContext) = titleAndBody._2
     }
 
   implicit def stringToView(s: String) = new TextView(s)
@@ -191,6 +186,6 @@ object View {
   implicit def elemToView(elem: xml.Elem) = new XhtmlView {
     def title = elem \\ "h1" text
     override def cssFiles = List("style.css")
-    def body(implicit ctxPath: ContextPath) = elem
+    def body(implicit ctx: RenderContext) = elem
   }
 }

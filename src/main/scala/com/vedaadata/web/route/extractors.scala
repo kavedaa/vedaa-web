@@ -1,5 +1,7 @@
 package com.vedaadata.web.route
 
+import scala.util.Try
+
 trait CommonExtractors {
   
   object & {
@@ -7,7 +9,7 @@ trait CommonExtractors {
   }
 
   object int {
-    def unapply(s: String) = try { Some(s.toInt) } catch { case _ => None }
+    def unapply(s: String) = Try(s.toInt).toOption
   }
     
 }

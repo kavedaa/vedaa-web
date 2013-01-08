@@ -2,6 +2,7 @@ package com.vedaadata.web.route
 
 import java.text.DateFormat
 import java.text.ParseException
+import scala.util.Try
 
 class Params(val self: Map[String, Array[String]]) {
   
@@ -17,37 +18,33 @@ class Params(val self: Map[String, Array[String]]) {
 
   //	Typed simple values
   
-  def int(name: String): Option[Int] =
-    try { apply(name) map { _.toInt } } catch { case ex: NumberFormatException => None }
+  def int(name: String): Option[Int] = apply(name) flatMap(s => Try(s.toInt).toOption) 
 
   def string(name: String) = value(name)
     
   def date(name: String)(implicit df: DateFormat): Option[java.util.Date] =
-    try { apply(name) map df.parse } catch { case ex: ParseException => None }
+    apply(name) flatMap(s => Try(df parse s).toOption)
 
   def boolean(name: String): Option[Boolean] =
-    apply(name) map { _ match {
+    apply(name) map { 
       case "true" | "1" | "yes" | "on" => true
       case _ => false
-    } }
+    } 
 
   //	Typed list values
   
   def strings(name: String): List[String] = values(name)
   
-  def ints(name: String): List[Int] = values(name) flatMap { s => 
-    try { Some(s.toInt) } catch { case _: NumberFormatException => None } 
-  }
+  def ints(name: String): List[Int] = values(name) flatMap(s => Try(s.toInt).toOption) 
   
   //  gir alle x som Int for eksisterende parametre på formen "name_x"
   def intIdsForName(name: String): List[Int] = {
     val regex = """([A-Za-z0-9-]+)_([0-9]+)""".r
-    self.toList map { param =>
-      try {
+    self.toList flatMap { param =>
+      Try {
         val regex(paramName, id) = param._1
         if (paramName == name) Some(id.toInt) else None
-      }
-      catch { case _ => None}
+      } toOption      
     }
   } flatten
 
