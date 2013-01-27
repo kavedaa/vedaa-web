@@ -39,6 +39,8 @@ class ByteArrayView(ba: Array[Byte], val contentType: String) extends ContentVie
 
 class StreamView(val contentType: String, f: java.io.OutputStream => Unit) extends ContentView {
   def render(request: HttpServletRequest, response: HttpServletResponse) {
+    response.reset()
+    response.setHeader("Cache-Control", "private"); 	// IE8 workaround
     response setContentType contentType
     val os = response.getOutputStream
     f(os)
@@ -60,6 +62,8 @@ class FileStreamerView(file: File, servlet: HttpServlet) extends View with FileS
     }
 
   def render(request: HttpServletRequest, response: HttpServletResponse) {
+    response.reset()
+    response.setHeader("Cache-Control", "private"); 	// IE8 workaround
     response setContentType (contentType(file.getName))
     println(file.getName)
     println(contentType(file.getName))
