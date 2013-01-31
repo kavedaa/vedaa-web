@@ -34,8 +34,8 @@ class RouterServlet extends HttpServlet with CommonExtractors {
   def default(view: View) { default = { case _ => view } }
 
   override def service(request: HttpServletRequest, response: HttpServletResponse) {
-    implicit val ctx = RenderContext(request, response)
-    routes(ctx).render
+    val ctx = RenderContext(request, response)
+    routes(ctx) render ctx
   }
 
   class Method(name: String) {
