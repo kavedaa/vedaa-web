@@ -1,22 +1,28 @@
 package com.vedaadata.web
 
-abstract class Request[R] {
+import java.io.PrintWriter
+
+abstract class Request[+R] {
   
-  val r: R
+  val raw: R
   
   def getContextPath: String
+  def getParameterMap: java.util.Map[String, Array[String]]
 }
 
 
-abstract class Response[R] {
+abstract class Response[+R] {
 
-  val r: R
+  val raw: R
+  
+  def setContentType(contentType: String)
+  def getWriter: PrintWriter
 }
 
 abstract class Cycle {
-  type Q
-  type P
-  val request: Request[Q]
-  val response: Response[P]
+  type Req
+  type Resp
+  val request: Request[Req]
+  val response: Response[Resp]
 }
 

@@ -4,17 +4,18 @@ import com.vedaadata.web._
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
-class ServletRequest(val r: HttpServletRequest) extends Request[HttpServletRequest] {
-
-  def getContextPath = r.getContextPath
+class HttpServletRequestProxy(val raw: HttpServletRequest) extends Request[HttpServletRequest] {
+  def getContextPath = raw.getContextPath
+  def getParameterMap = raw.getParameterMap.asInstanceOf[java.util.Map[String, Array[String]]]
 }
 
-class ServletResponse(val r: HttpServletResponse) extends Response[HttpServletResponse] {
- 
+class HttpServletResponseProxy(val raw: HttpServletResponse) extends Response[HttpServletResponse] {
+  def setContentType(contentType: String) = raw setContentType contentType
+  def getWriter = raw.getWriter
 }
 
-case class ServletCycle(request: ServletRequest, response: ServletResponse)
+class ServletCycle(val request: HttpServletRequestProxy, val response: HttpServletResponseProxy)
   extends Cycle {
-  type Q = HttpServletRequest
-  type P = HttpServletResponse
+  type Req = HttpServletRequest
+  type Resp = HttpServletResponse
 }
