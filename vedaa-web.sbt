@@ -1,6 +1,6 @@
 name := "vedaa-web"
 
-version := "1.0-SNAPSHOT"
+version := "1.1-SNAPSHOT"
 
 organization := "no.vedaadata"
 
