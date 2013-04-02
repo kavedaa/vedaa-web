@@ -162,18 +162,20 @@ class BinaryServicer(contentType: String)(ba: Array[Byte]) extends Servicer {
     c.response setContentType contentType
     val os = c.response.getOutputStream
     os write ba
-    os flush()
-    os close()
+    os flush ()
+    os close ()
   }
 }
 
 class StreamServicer[U](contentType: String)(f: java.io.OutputStream => U) extends Servicer {
   def service(implicit c: ServletCycle) {
+    c.response reset ()
+    c.response setHeader ("Cache-Control", "private") // IE8 workaround    
     c.response setContentType contentType
     val os = c.response.getOutputStream
     f(os)
-    os flush()
-    os close()
+    os flush ()
+    os close ()
   }
 }
 
