@@ -201,11 +201,17 @@ class RouterServlet extends HttpServlet with CommonExtractors {
   /**
    * Convenience method for a local redirect, e.g. as in a post-redirect-get pattern.
    */
-  def redirect: Servicer = ContextRedirect("")
+  def localRedirect(url: String): Servicer = ContextRedirect(url)
+
+  /**
+   * Convenience method for a local redirect to the same URL.
+   */
+  def localRedirect: Servicer = ContextRedirect("")
 
 }
 
 trait PathInfoRouting { this: RouterServlet =>
   override private[servlet] def path(request: HttpServletRequest) = request.getPathInfo
-  override def redirect = ContextServletRedirect("")
+  override def localRedirect(url: String) = ContextServletRedirect(url)
+  override def localRedirect = ContextServletRedirect("")
 }
