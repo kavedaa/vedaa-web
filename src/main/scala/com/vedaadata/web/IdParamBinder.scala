@@ -1,7 +1,6 @@
 package com.vedaadata.web
+
 import scala.util.Try
-import com.vedaadata.web.AbstractParameters
-import scala.Option.option2Iterable
 
 case class IdParam(
   id: String,

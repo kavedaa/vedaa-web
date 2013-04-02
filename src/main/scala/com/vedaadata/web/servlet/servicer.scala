@@ -158,7 +158,7 @@ object SimpleXhtml {
 }
 
 class BinaryServicer(contentType: String)(ba: Array[Byte]) extends Servicer {
-  def render(implicit c: ServletCycle) {
+  def service(implicit c: ServletCycle) {
     c.response setContentType contentType
     val os = c.response.getOutputStream
     os write ba
@@ -168,7 +168,7 @@ class BinaryServicer(contentType: String)(ba: Array[Byte]) extends Servicer {
 }
 
 class StreamServicer[U](contentType: String)(f: java.io.OutputStream => U) extends Servicer {
-  def render(implicit c: ServletCycle) {
+  def service(implicit c: ServletCycle) {
     c.response setContentType contentType
     val os = c.response.getOutputStream
     f(os)

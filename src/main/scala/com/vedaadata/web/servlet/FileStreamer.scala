@@ -16,7 +16,7 @@ class FileStreamer(file: File, servlet: HttpServlet) extends Servicer {
       case contentType => contentType
     }
 
-  def render(implicit c: ServletCycle) {
+  def service(implicit c: ServletCycle) {
     c.response setContentType (contentType(file.getName))
     println(file.getName)
     println(contentType(file.getName))
