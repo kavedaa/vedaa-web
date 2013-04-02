@@ -8,15 +8,18 @@ import java.text.DateFormat
  * Wraps all request parameters and values in a scala.immutable.Map[String, String].
  * Has utility methods to read out single parameter values as specific datatypes.
  */
-class Params private[web] (protected val self: Map[String, Seq[String]])
-  extends Map[String, String] {
+abstract class AbstractParameters extends Map[String, String] {
+
+  protected val self: Map[String, Seq[String]]
+
+  def paramsCompanion: ParametersCompanion
 
   private lazy val single = self collect { case (k, v) if v.nonEmpty => (k, v.head) }
 
   /**
    * Gives access to multiple values of parameters.
    */
-  lazy val multi = new MultiParams(self)
+  val multi: AbstractMultiParameters
 
   //	Map implementation methods
 
@@ -32,11 +35,11 @@ class Params private[web] (protected val self: Map[String, Seq[String]])
 
   //	Parameter value methods
 
-  def int(name: String): Option[Int] = get(name) flatMap Params.int
+  def int(name: String): Option[Int] = get(name) flatMap paramsCompanion.int
 
-  def boolean(name: String): Option[Boolean] = get(name) map Params.boolean
+  def boolean(name: String): Boolean = contains(name)
 
-  def date(name: String)(implicit df: DateFormat): Option[java.util.Date] = get(name) flatMap Params.date
+  def date(name: String)(implicit df: DateFormat): Option[java.util.Date] = get(name) flatMap paramsCompanion.date
 
   /**
    * Gives parameter value for parameter named like "name_id"
@@ -48,8 +51,11 @@ class Params private[web] (protected val self: Map[String, Seq[String]])
  * Wraps all request parameters and values in a scala.immutable.Map[String, Seq[String]].
  * Has utility methods to read out multiple parameter values as specific datatypes.
  */
-class MultiParams private[web] (protected val self: Map[String, Seq[String]])
-  extends Map[String, Seq[String]] {
+abstract class AbstractMultiParameters extends Map[String, Seq[String]] {
+
+  protected val self: Map[String, Seq[String]]
+
+  def paramsCompanion: ParametersCompanion
 
   //	Map implementation methods
 
@@ -67,11 +73,11 @@ class MultiParams private[web] (protected val self: Map[String, Seq[String]])
 
   //	Parameter value methods
 
-  def int(name: String): Seq[Int] = apply(name) flatMap Params.int
+  def int(name: String): Seq[Int] = apply(name) flatMap paramsCompanion.int
 
-  def boolean(name: String): Seq[Boolean] = apply(name) map Params.boolean
+//  def boolean(name: String): Seq[Boolean] = apply(name) map paramsCompanion.boolean
 
-  def date(name: String)(implicit df: DateFormat): Seq[java.util.Date] = apply(name) flatMap Params.date
+  def date(name: String)(implicit df: DateFormat): Seq[java.util.Date] = apply(name) flatMap paramsCompanion.date
 
   /**
    * Gives parameter value for parameter named like "name_id".
@@ -91,20 +97,27 @@ class MultiParams private[web] (protected val self: Map[String, Seq[String]])
 
 }
 
-object Params {
-
-  def fromRequest(request: Request[_]) =
-    new Params(JavaConversions mapAsScalaMap request.getParameterMap map { case (k, v) => (k, v.toSeq) } toMap)
-
-  def unapply(request: Request[_]) =
-    Some(fromRequest(request))
+class ParametersCompanion {
 
   private[web] def int(value: String) = Try(value.toInt).toOption
 
-  private[web] def boolean(value: String) = value match {
-    case "true" | "1" | "yes" | "on" => true
-    case _ => false
-  }
+//  private[web] def boolean(value: String) = value match {
+//    case "true" | "1" | "yes" | "on" => true
+//    case _ => false
+//  }
 
   private[web] def date(value: String)(implicit df: DateFormat) = Try(df parse value).toOption
+}
+
+//	Utility classes
+
+class Parameter(val name: String) {
+  def apply(f: this.type => String) = name -> f(this)
+  def unapply(params: AbstractParameters) = Some(params(name))
+}
+
+abstract class DefaultParameter(val name: String) {
+  def default: String
+  def apply(f: this.type => String) = name -> f(this)
+  def unapply(params: AbstractParameters) = Some(params get name getOrElse default) 
 }

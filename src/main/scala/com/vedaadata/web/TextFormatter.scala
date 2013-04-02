@@ -1,4 +1,4 @@
-package com.vedaadata.web.text
+package com.vedaadata.web
 
 object TextFormatter
 {

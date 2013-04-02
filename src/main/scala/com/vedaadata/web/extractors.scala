@@ -1,4 +1,4 @@
-package com.vedaadata.web.route
+package com.vedaadata.web
 
 import scala.util.Try
 

@@ -1,32 +1,35 @@
-package com.vedaadata.web.io
+package com.vedaadata.web.servlet
 
 import java.io._
 import javax.servlet.http.HttpServletResponse
+import javax.servlet.http.HttpServlet
 
-trait FileStreamer
-{
-  def contentType(fileName: String): String
+class FileStreamer(file: File, servlet: HttpServlet) extends Servicer {
 
-  def streamOriginal(fileName: String, path: String, response: HttpServletResponse) {
-    streamFile(new File(path, fileName), response) {
-      (inputStream, outputStream) => println("Read " + stream(inputStream, outputStream) + " bytes.")
+  def this(filePath: String, servlet: HttpServlet) = this(new File(filePath), servlet)
+
+  def this(fileName: String, path: String, servlet: HttpServlet) = this(new File(path, fileName), servlet)
+
+  def contentType(fileName: String) =
+    servlet.getServletContext.getMimeType(fileName.toLowerCase) match {
+      case null => "application/octet-stream"
+      case contentType => contentType
     }
+
+  def render(implicit c: ServletCycle) {
+    c.response setContentType (contentType(file.getName))
+    println(file.getName)
+    println(contentType(file.getName))
+    streamFile(file, c.response)
   }
 
-  def streamOriginal(file: File, response: HttpServletResponse) {
-    streamFile(file, response) {
-      (inputStream, outputStream) => println("Read " + stream(inputStream, outputStream) + " bytes.")
-    }
-  }
-
-  def streamFile(file: File, response: HttpServletResponse)(method: (InputStream, OutputStream) => Unit)
-  {
+  def streamFile(file: File, response: HttpServletResponse) {
     try {
       val inputStream = new FileInputStream(file)
       if (inputStream != null) {
         val outputStream = response.getOutputStream
         response setContentType contentType(file.getName)
-        try { method(inputStream, outputStream) }
+        try { stream(inputStream, outputStream) }
         catch {
           case ex: IOException =>
             println("Error reading file " + ex)
@@ -48,8 +51,8 @@ trait FileStreamer
     }
   }
 
-  def stream(inputStream: InputStream, outputStream: OutputStream) =
-  {
+  def stream(inputStream: InputStream, outputStream: OutputStream) = {
+
     val buffer = new Array[Byte](16384)
 
     def doStream(total: Int = 0): Int = {
@@ -64,5 +67,6 @@ trait FileStreamer
 
     doStream()
   }
-  
+
 }
+

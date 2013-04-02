@@ -1,9 +1,9 @@
-package com.vedaadata.web.view
+package com.vedaadata.web
 
 import java.text.SimpleDateFormat
 
-trait HtmlUtil
-{
+trait XhtmlUtils {
+  
   def checkBox(name: String, checked: Boolean = false, value: String = "1", clazz: String = "", disabled: Boolean = false) =
     (checked, disabled) match {
       case (false, false) =>
