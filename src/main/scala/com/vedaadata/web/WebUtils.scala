@@ -1,6 +1,6 @@
 package com.vedaadata.web
 
-object Utils {
+trait WebUtils {
   
   def stripToDashes(text: String) =
     text map { char =>
@@ -28,3 +28,5 @@ object Utils {
   }
   
 }
+
+object WebUtils extends WebUtils

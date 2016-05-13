@@ -31,9 +31,9 @@ abstract class Servicer {
 /**
  * Servicer for returning a simple text response.
  */
-class TextServicer(text: String) extends Servicer {
+class TextServicer(text: String, mimeType: String = "text/plain") extends Servicer {
   def service(implicit c: ServletCycle) {
-    c.response setContentType "text/plain; charset=utf-8"
+    c.response setContentType (mimeType + "; charset=utf-8")
     c.response.getWriter print text
   }
 }
@@ -72,6 +72,10 @@ abstract class XmlServicer extends Servicer {
     c.response.getWriter print content
   }
 
+}
+
+abstract class SimpleXml extends XmlServicer {
+  def preamble = Some("""<?xml version="1.0" encoding="UTF-8"?>""")
 }
 
 /**
@@ -157,7 +161,7 @@ object SimpleXhtml {
     }
 }
 
-class BinaryServicer(contentType: String)(ba: Array[Byte]) extends Servicer {
+case class BinaryServicer(contentType: String)(ba: Array[Byte]) extends Servicer {
   def service(implicit c: ServletCycle) {
     c.response setContentType contentType
     val os = c.response.getOutputStream
@@ -167,7 +171,7 @@ class BinaryServicer(contentType: String)(ba: Array[Byte]) extends Servicer {
   }
 }
 
-class StreamServicer[U](contentType: String)(f: java.io.OutputStream => U) extends Servicer {
+case class StreamServicer[U](contentType: String)(f: java.io.OutputStream => U) extends Servicer {
   def service(implicit c: ServletCycle) {
     c.response reset ()
     c.response setHeader ("Cache-Control", "private") // IE8 workaround    
@@ -203,6 +207,13 @@ case class Status(code: Int) extends Servicer {
 case class Error(code: Int, error: String = "") extends Servicer {
   def service(implicit c: ServletCycle) {
     c.response sendError (code, error)
+  }
+}
+
+case class Unauthorized(realm: String) extends Servicer {
+  def service(implicit c: ServletCycle) {
+    c.response setHeader ("WWW-Authenticate", "BASIC realm=\"" + realm + "\"")
+    c.response sendError HttpServletResponse.SC_UNAUTHORIZED
   }
 }
 

@@ -21,6 +21,8 @@ abstract class AbstractParameters extends Map[String, String] {
    */
   val multi: AbstractMultiParameters
 
+  lazy val idParameters = new IdParameters(this)
+  
   //	Map implementation methods
 
   def get(key: String) = single get key
@@ -113,7 +115,7 @@ class ParametersCompanion {
 
 class Parameter(val name: String) {
   def apply(f: this.type => String) = name -> f(this)
-  def unapply(params: AbstractParameters) = Some(params(name))
+  def unapply(params: AbstractParameters) = Some(params get name)
 }
 
 abstract class DefaultParameter(val name: String) {

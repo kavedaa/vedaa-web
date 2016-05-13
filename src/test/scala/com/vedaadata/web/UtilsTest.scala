@@ -5,7 +5,7 @@ import org.scalatest.matchers.ShouldMatchers
 
 class UtilsTest extends FunSuite with ShouldMatchers {
 
-  import Utils._
+  import WebUtils._
 
   test("URL") {
 

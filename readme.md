@@ -13,7 +13,7 @@ To use the framework in your SBT-based project, add the following dependency to 
 ```scala
 libraryDependencies += "no.vedaadata" %% "vedaa-web" % "1.5-SNAPSHOT"
 ```
-You'll also gonna need the Java Servlet API:
+You also need the Java Servlet API:
 
 ```scala
 libraryDependencies += "javax.servlet" % "servlet-api" % "2.5" % "provided"
