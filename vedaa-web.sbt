@@ -10,6 +10,8 @@ crossScalaVersions := Seq("2.10.2", "2.11.5")
 
 libraryDependencies += "javax.servlet" % "servlet-api" % "2.5" % "provided"
 
+libraryDependencies += "commons-fileupload" % "commons-fileupload" % "1.3.3"
+
 libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.4" % "test"
 
 // add scala-xml dependency when needed (for Scala 2.11 and newer) in a robust way
