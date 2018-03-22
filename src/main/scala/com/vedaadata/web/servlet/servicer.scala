@@ -122,9 +122,14 @@ abstract class SimpleXhtml extends XmlServicer {
 
   def title: String
 
+  def metas: List[(String, String)] = Nil
+  def links: List[(String, String, String)] = Nil
+
   def cssFiles: List[String] = Nil
+  def cssLinks: List[String] = Nil
 
   def jsFiles: List[String] = Nil
+  def jsLinks: List[String] = Nil
 
   def body(implicit c: ServletCycle): scala.xml.Elem
 
@@ -133,8 +138,28 @@ abstract class SimpleXhtml extends XmlServicer {
       <head>
         <title>{ title }</title>
         {
+          metas map { case (name, content) =>
+            <meta name={ name } content={ content } />
+          }
+        }
+        {
+          links map { case (rel, href, tpe) =>
+            <link rel={ rel } href={ href } type={ tpe } />
+          }
+        }
+        {
+          cssLinks.reverse map { cssLink =>
+            <link rel="stylesheet" type="text/css" href={ cssLink }/>
+          }
+        }
+        {
           cssFiles.reverse map { cssFile =>
             <link rel="stylesheet" type="text/css" href={ contextify(cssFile) }/>
+          }
+        }
+        {
+          jsLinks.reverse map { jsLink =>
+            <script src={ jsLink }></script>
           }
         }
         {
