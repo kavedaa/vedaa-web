@@ -7,6 +7,11 @@ import scala.collection.mutable.ListBuffer
 import com.vedaadata.web._
 import scala.collection.JavaConversions
 import javax.servlet.http.HttpSession
+import org.apache.commons.fileupload._
+import org.apache.commons.fileupload.servlet._
+import org.apache.commons.fileupload.disk._
+import org.apache.commons.io._
+import collection.JavaConversions
 
 case class ServletCycle(request: HttpServletRequest, response: HttpServletResponse)
 
@@ -140,6 +145,15 @@ class RouterServlet extends HttpServlet with CommonExtractors {
     def paramsCompanion = Parameters
   }
 
+  class MultipartFormdataParameters private[web] (protected val self: Map[String, Seq[String]], protected val fileItems: Seq[FileItem])
+    extends AbstractMultipartFormdataParameters {
+
+    def paramsCompanion = MultipartFormdataParameters
+
+    lazy val multi = new MultiParameters(self)    
+  }
+
+
   /**
    * Extracts request parameters from a cycle.
    */
@@ -149,6 +163,30 @@ class RouterServlet extends HttpServlet with CommonExtractors {
       new Parameters(JavaConversions mapAsScalaMap request.getParameterMap.asInstanceOf[java.util.Map[String, Array[String]]] map {
         case (k, v) => (k, v.toSeq)
       } toMap)
+
+    def unapply(cycle: ServletCycle) =
+      Some(fromRequest(cycle.request))
+  }
+
+  /**
+   * Extracts request multipart form data parameters from a cycle.
+   */
+  object MultipartFormdataParameters extends ParametersCompanion {
+
+    def fromRequest(request: HttpServletRequest) = {
+
+    val items = JavaConversions asScalaBuffer (new ServletFileUpload(new DiskFileItemFactory) parseRequest request)        
+
+      val (formItems, fileItems) = items partition(_.isFormField)
+
+      val params = formItems map { item =>
+        item.getFieldName -> item.getString
+      }
+
+      val paramsMap = params groupBy { case (name, value) => name } map  { case (name, nameValues) => name -> (nameValues map(_._2)) }
+
+      new MultipartFormdataParameters(paramsMap, fileItems) 
+    }
 
     def unapply(cycle: ServletCycle) =
       Some(fromRequest(cycle.request))

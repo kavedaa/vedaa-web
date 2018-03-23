@@ -3,6 +3,7 @@ package com.vedaadata.web
 import scala.collection.JavaConversions
 import scala.util.Try
 import java.text.DateFormat
+import org.apache.commons.fileupload.FileItem
 
 /**
  * Wraps all request parameters and values in a scala.immutable.Map[String, String].
@@ -97,6 +98,13 @@ abstract class AbstractMultiParameters extends Map[String, Seq[String]] {
     }
   } flatten
 
+}
+
+abstract class AbstractMultipartFormdataParameters extends AbstractParameters {
+
+  protected val fileItems: Seq[FileItem]
+
+  def file(name: String) = fileItems find(_.getFieldName == name)
 }
 
 class ParametersCompanion {
