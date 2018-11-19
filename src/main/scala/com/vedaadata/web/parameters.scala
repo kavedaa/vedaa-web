@@ -105,6 +105,7 @@ abstract class AbstractMultipartFormdataParameters extends AbstractParameters {
   protected val fileItems: Seq[FileItem]
 
   def file(name: String) = fileItems find(_.getFieldName == name)
+  def files(name: String) = fileItems filter(_.getFieldName == name)
 }
 
 class ParametersCompanion {
