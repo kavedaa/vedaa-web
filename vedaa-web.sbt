@@ -4,9 +4,9 @@ version := "1.5-SNAPSHOT"
 
 organization := "no.vedaadata"
 
-scalaVersion := "2.10.2"
+scalaVersion := "2.11.12"
 
-crossScalaVersions := Seq("2.10.2", "2.11.5")
+crossScalaVersions := Seq("2.10.2", "2.11.12")
 
 libraryDependencies += "javax.servlet" % "servlet-api" % "2.5" % "provided"
 

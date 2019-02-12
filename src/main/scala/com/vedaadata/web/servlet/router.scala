@@ -13,7 +13,7 @@ import org.apache.commons.fileupload.disk._
 import org.apache.commons.io._
 import collection.JavaConversions
 
-case class ServletCycle(request: HttpServletRequest, response: HttpServletResponse)
+case class ServletCycle(request: HttpServletRequest, response: HttpServletResponse, encoding: String)
 
 class RouterServlet extends HttpServlet with CommonExtractors {
 
@@ -39,14 +39,14 @@ class RouterServlet extends HttpServlet with CommonExtractors {
   private lazy val routes = routeBuilder :+ default reduceLeft (_ orElse _)
 
   /**
-   * Defines the default encoding for processing action requests as "UTF-8".
+   * Defines the default encoding for processing requests as "UTF-8".
    * Override this method to use a different encoding.
    */
   def encoding = "UTF-8"
 
   override protected def service(request: HttpServletRequest, response: HttpServletResponse) {
     request setCharacterEncoding encoding
-    val cycle = new ServletCycle(request, response)
+    val cycle = new ServletCycle(request, response, encoding)
     routes(cycle) service cycle
   }
 
@@ -173,14 +173,14 @@ class RouterServlet extends HttpServlet with CommonExtractors {
    */
   object MultipartFormdataParameters extends ParametersCompanion {
 
-    def fromRequest(request: HttpServletRequest) = {
+    def fromRequest(request: HttpServletRequest, encoding: String) = {
 
     val items = JavaConversions asScalaBuffer (new ServletFileUpload(new DiskFileItemFactory) parseRequest request)        
 
       val (formItems, fileItems) = items partition(_.isFormField)
 
       val params = formItems map { item =>
-        item.getFieldName -> item.getString
+        item.getFieldName -> item.getString(encoding)
       }
 
       val paramsMap = params groupBy { case (name, value) => name } map  { case (name, nameValues) => name -> (nameValues map(_._2)) }
@@ -189,7 +189,7 @@ class RouterServlet extends HttpServlet with CommonExtractors {
     }
 
     def unapply(cycle: ServletCycle) =
-      Some(fromRequest(cycle.request))
+      Some(fromRequest(cycle.request, cycle.encoding))
   }
 
   /**
