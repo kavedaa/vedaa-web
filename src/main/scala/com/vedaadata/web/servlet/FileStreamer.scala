@@ -16,14 +16,14 @@ class FileStreamer(file: File, servlet: HttpServlet) extends Servicer {
       case contentType => contentType
     }
 
-  def service(implicit c: ServletCycle) {
+  def service(implicit c: ServletCycle) = {
     c.response setContentType (contentType(file.getName))
     println(file.getName)
     println(contentType(file.getName))
     streamFile(file, c.response)
   }
 
-  def streamFile(file: File, response: HttpServletResponse) {
+  def streamFile(file: File, response: HttpServletResponse) = {
     try {
       val inputStream = new FileInputStream(file)
       if (inputStream != null) {

@@ -1,13 +1,20 @@
-*.class
-*.bak
-*.log
 
-.metals/
+.vscode/
+
+.bsp
 .bloop/
+.metals/
+metals.sbt
+null
 
+# Play application
+logs
+project/project
+project/target
+target
+tmp
 # sbt specific
-.cache-main
-.cache
+.cache/
 .history/
 .lib/
 dist/*
@@ -19,7 +26,6 @@ project/plugins/project/
 .logs/
 
 # Scala-IDE specific
-eclipse-settings.sbt
 .scala_dependencies
 .worksheet
 .classpath

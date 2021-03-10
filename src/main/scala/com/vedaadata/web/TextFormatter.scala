@@ -6,7 +6,7 @@ object TextFormatter
     s => throw new Exception("TextFormatter.markdownProcessor not initialized.")
   }
 
-  def setMarkdownProcessor(f: String => scala.xml.NodeSeq) { markdownProcessor = f }
+  def setMarkdownProcessor(f: String => scala.xml.NodeSeq) = { markdownProcessor = f }
 
   object Format extends Enumeration {
     val plainText = Value("Plain")

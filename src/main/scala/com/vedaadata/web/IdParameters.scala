@@ -13,22 +13,23 @@ class IdParameters(parameters: AbstractParameters) {
   val NameId = """([A-Za-z0-9-]+)_([A-Za-z0-9-]+)""".r
 
   def idParameters =
-    parameters map { case (paramNameWithId, value) =>
-      Try {
+    parameters flatMap { case (paramNameWithId, value) =>
+      val idParameter = Try {
         val NameId(name, id) = paramNameWithId
         IdParameter(id, name, value)
-      } toOption
-    } flatten
+      } 
+      idParameter.toOption
+    }
 
   //  returns Map(id -> Map(name -> value))
   def byId: Map[String, Map[String, String]] =
     idParameters groupBy(_.id) map { idParamMap => 
-      idParamMap._1 -> (idParamMap._2 map { idParam => idParam.name -> idParam.value } toMap)
+      idParamMap._1 -> idParamMap._2.map(idParam => idParam.name -> idParam.value).toMap
     }
 
   //  returns Map(name -> Map(id -> value))
   def byName: Map[String, Map[String, String]] =
     idParameters groupBy(_.name) map { idParamMap =>
-      idParamMap._1 -> (idParamMap._2 map { idParam => idParam.id -> idParam.value } toMap)
+      idParamMap._1 -> idParamMap._2.map(idParam => idParam.id -> idParam.value).toMap
     }
 }

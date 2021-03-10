@@ -1,25 +1,24 @@
 package com.vedaadata.web.servlet
 
-import javax.servlet.http.HttpServlet
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
 import scala.collection.mutable.ListBuffer
-import com.vedaadata.web._
-import scala.collection.JavaConversions
-import javax.servlet.http.HttpSession
+import scala.jdk.CollectionConverters._
+
+import javax.servlet.http._
+
 import org.apache.commons.fileupload._
 import org.apache.commons.fileupload.servlet._
 import org.apache.commons.fileupload.disk._
 import org.apache.commons.io._
-import collection.JavaConversions
 
-case class ServletCycle(request: HttpServletRequest, response: HttpServletResponse, encoding: String)
+import com.vedaadata.web._
+
+case class ServletCycle(request: HttpServletRequest, response: HttpServletResponse)
 
 class RouterServlet extends HttpServlet with CommonExtractors {
 
   private val routeBuilder = new ListBuffer[PartialFunction[ServletCycle, Servicer]]
 
-  private var default: PartialFunction[ServletCycle, Servicer] = {
+  private var default0: PartialFunction[ServletCycle, Servicer] = {
     case _ => Error(HttpServletResponse.SC_NOT_FOUND)
   }
 
@@ -27,26 +26,26 @@ class RouterServlet extends HttpServlet with CommonExtractors {
    * Defines any number of routes, usually in the form of `case` statements.
    * An invocation (or several) of this method should be the main part of your servlet (in the constructor).
    */
-  def route(r: PartialFunction[ServletCycle, Servicer]) { r +=: routeBuilder }
+  def route(r: PartialFunction[ServletCycle, Servicer])= { r +=: routeBuilder }
 
   /**
    * Defines a default servicer that gets used if none of those defined in `route` matches.
    * (You can of course also define that as the last case in `route`, but
    * using this method makes it more explicit.)
    */
-  def default(servicer: Servicer) { default = { case _ => servicer } }
+  def default(servicer: Servicer) = { default0 = { case _ => servicer } }
 
-  private lazy val routes = routeBuilder :+ default reduceLeft (_ orElse _)
+  private lazy val routes = routeBuilder :+ default0 reduceLeft (_ orElse _)
 
   /**
-   * Defines the default encoding for processing requests as "UTF-8".
+   * Defines the default encoding for processing action requests as "UTF-8".
    * Override this method to use a different encoding.
    */
   def encoding = "UTF-8"
 
-  override protected def service(request: HttpServletRequest, response: HttpServletResponse) {
+  override protected def service(request: HttpServletRequest, response: HttpServletResponse) = {
     request setCharacterEncoding encoding
-    val cycle = new ServletCycle(request, response, encoding)
+    val cycle = new ServletCycle(request, response)
     routes(cycle) service cycle
   }
 
@@ -159,10 +158,12 @@ class RouterServlet extends HttpServlet with CommonExtractors {
    */
   object Parameters extends ParametersCompanion {
 
-    def fromRequest(request: HttpServletRequest) =
-      new Parameters(JavaConversions mapAsScalaMap request.getParameterMap.asInstanceOf[java.util.Map[String, Array[String]]] map {
+    def fromRequest(request: HttpServletRequest) = {
+      val parameters = request.getParameterMap.asInstanceOf[java.util.Map[String, Array[String]]].asScala map {
         case (k, v) => (k, v.toSeq)
-      } toMap)
+      } 
+      new Parameters(parameters.toMap)
+    }
 
     def unapply(cycle: ServletCycle) =
       Some(fromRequest(cycle.request))
@@ -173,14 +174,14 @@ class RouterServlet extends HttpServlet with CommonExtractors {
    */
   object MultipartFormdataParameters extends ParametersCompanion {
 
-    def fromRequest(request: HttpServletRequest, encoding: String) = {
+    def fromRequest(request: HttpServletRequest) = {
 
-    val items = JavaConversions asScalaBuffer (new ServletFileUpload(new DiskFileItemFactory) parseRequest request)        
+    val items = new ServletFileUpload(new DiskFileItemFactory).parseRequest(request).asScala.toSeq       
 
       val (formItems, fileItems) = items partition(_.isFormField)
 
       val params = formItems map { item =>
-        item.getFieldName -> item.getString(encoding)
+        item.getFieldName -> item.getString
       }
 
       val paramsMap = params groupBy { case (name, value) => name } map  { case (name, nameValues) => name -> (nameValues map(_._2)) }
@@ -189,7 +190,7 @@ class RouterServlet extends HttpServlet with CommonExtractors {
     }
 
     def unapply(cycle: ServletCycle) =
-      Some(fromRequest(cycle.request, cycle.encoding))
+      Some(fromRequest(cycle.request))
   }
 
   /**

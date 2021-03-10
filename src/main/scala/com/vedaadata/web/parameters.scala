@@ -1,8 +1,9 @@
 package com.vedaadata.web
 
-import scala.collection.JavaConversions
 import scala.util.Try
+
 import java.text.DateFormat
+
 import org.apache.commons.fileupload.FileItem
 
 /**
@@ -32,9 +33,9 @@ abstract class AbstractParameters extends Map[String, String] {
 
   //	These two are not really that useful but are required on Map
 
-  def +[B1 >: String](kv: (String, B1)) = single + kv
+  def updated[B1 >: String](key: String, value: B1) = single + (key -> value)
 
-  def -(key: String) = single - key
+  def removed(key: String) = single - key
 
   //	Parameter value methods
 
@@ -70,9 +71,9 @@ abstract class AbstractMultiParameters extends Map[String, Seq[String]] {
 
   //	These two are not really that useful but are required on Map
 
-  def +[B1 >: Seq[String]](kv: (String, B1)) = self + kv
+  def updated[B1 >: Seq[String]](key: String, value: B1) = self + (key -> value)
 
-  def -(key: String) = self - key
+  def removed(key: String) = self - key
 
   //	Parameter value methods
 
@@ -90,13 +91,15 @@ abstract class AbstractMultiParameters extends Map[String, Seq[String]] {
   //  gir alle x som Int for eksisterende parametre på formen "name_x"
   def intIdsForName(name: String): Seq[Int] = {
     val regex = """([A-Za-z0-9-]+)_([0-9]+)""".r
-    self.toSeq flatMap { param =>
-      Try {
+    val intIds = self.toSeq flatMap { param =>
+      val intId = Try {
         val regex(paramName, id) = param._1
         if (paramName == name) Some(id.toInt) else None
-      } toOption
+      } 
+      intId.toOption
     }
-  } flatten
+    intIds.flatten
+  } 
 
 }
 

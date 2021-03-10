@@ -1,8 +1,10 @@
 package com.vedaadata.web.servlet
 
-import com.vedaadata.web._
 import scala.xml.PrettyPrinter
+
 import javax.servlet.http._
+
+import com.vedaadata.web._
 
 /**
  * Base class for all servicers. All `case` expressions in a `route` block in a RouterServlet
@@ -12,7 +14,7 @@ import javax.servlet.http._
  */
 abstract class Servicer {
 
-  def service(implicit c: ServletCycle)
+  def service(implicit c: ServletCycle): Unit
 
   def contextify(link: String)(implicit c: ServletCycle) =
     if (!link.startsWith("/") && !link.startsWith("http://")) contextPath(link)
@@ -32,7 +34,7 @@ abstract class Servicer {
  * Servicer for returning a simple text response.
  */
 class TextServicer(text: String, mimeType: String = "text/plain") extends Servicer {
-  def service(implicit c: ServletCycle) {
+  def service(implicit c: ServletCycle) = {
     c.response setContentType (mimeType + "; charset=utf-8")
     c.response.getWriter print text
   }
@@ -50,23 +52,23 @@ abstract class XmlServicer extends Servicer {
 
   def prettyPrint = true
 
-  def service(implicit c: ServletCycle) {
+  def service(implicit c: ServletCycle) = {
     if (prettyPrint) renderPretty
     else renderPlain
   }
 
-  private def renderPretty(implicit c: ServletCycle) {
+  private def renderPretty(implicit c: ServletCycle) = {
     val printer = new PrettyPrinter(1024, 2)
     val sb = new StringBuilder
     printer format (xml, sb)
     renderString(sb.toString)
   }
 
-  private def renderPlain(implicit c: ServletCycle) {
+  private def renderPlain(implicit c: ServletCycle) = {
     renderString(xml.toString)
   }
 
-  private def renderString(content: String)(implicit c: ServletCycle) {
+  private def renderString(content: String)(implicit c: ServletCycle) = {
     c.response setContentType contentType
     preamble map (c.response.getWriter println _)
     c.response.getWriter print content
@@ -187,24 +189,24 @@ object SimpleXhtml {
 }
 
 case class BinaryServicer(contentType: String)(ba: Array[Byte]) extends Servicer {
-  def service(implicit c: ServletCycle) {
+  def service(implicit c: ServletCycle) = {
     c.response setContentType contentType
     val os = c.response.getOutputStream
     os write ba
-    os flush ()
-    os close ()
+    os.flush()
+    os.close()
   }
 }
 
 case class StreamServicer[U](contentType: String)(f: java.io.OutputStream => U) extends Servicer {
-  def service(implicit c: ServletCycle) {
-    c.response reset ()
+  def service(implicit c: ServletCycle) = {
+    c.response.reset()
     c.response setHeader ("Cache-Control", "private") // IE8 workaround    
     c.response setContentType contentType
     val os = c.response.getOutputStream
     f(os)
-    os flush ()
-    os close ()
+    os.flush()
+    os.close()
   }
 }
 
@@ -223,20 +225,20 @@ case class ContextServletRedirect(url: String) extends Servicer {
 }
 
 case class Status(code: Int) extends Servicer {
-  def service(implicit c: ServletCycle) {
+  def service(implicit c: ServletCycle) = {
     c.response setContentType "text/plain"
     c.response setStatus code
   }
 }
 
 case class Error(code: Int, error: String = "") extends Servicer {
-  def service(implicit c: ServletCycle) {
+  def service(implicit c: ServletCycle) = {
     c.response sendError (code, error)
   }
 }
 
 case class Unauthorized(realm: String) extends Servicer {
-  def service(implicit c: ServletCycle) {
+  def service(implicit c: ServletCycle) = {
     c.response setHeader ("WWW-Authenticate", "BASIC realm=\"" + realm + "\"")
     c.response sendError HttpServletResponse.SC_UNAUTHORIZED
   }
